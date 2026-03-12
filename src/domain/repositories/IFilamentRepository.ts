@@ -4,6 +4,7 @@ export interface FilamentFilters {
   color?: string;
   filamentType?: string;
   status?: FilamentStatus;
+  manufacturer?: string;
 }
 
 export interface IFilamentRepository {

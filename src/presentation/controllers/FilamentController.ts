@@ -41,7 +41,7 @@ router.post('/purchases', async (req: Request, res: Response, next: NextFunction
 // GET /api/filaments - Listar filamentos com filtros
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const filters: { color?: string; filamentType?: string; status?: FilamentStatus } = {};
+    const filters: { color?: string; filamentType?: string; status?: FilamentStatus; manufacturer?: string } = {};
 
     if (req.query.color) {
       filters.color = req.query.color as string;
@@ -56,6 +56,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       if (statusValue === 'available' || statusValue === 'empty') {
         filters.status = statusValue === 'available' ? FilamentStatus.AVAILABLE : FilamentStatus.EMPTY;
       }
+    }
+
+    if (req.query.manufacturer) {
+      filters.manufacturer = req.query.manufacturer as string;
     }
 
     const result = await listFilamentsUseCase.execute(filters);

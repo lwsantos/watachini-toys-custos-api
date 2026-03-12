@@ -4,6 +4,7 @@ export interface ListFilamentsFilterDTO {
   color?: string;
   filamentType?: string;
   status?: FilamentStatus;
+  manufacturer?: string;
 }
 
 export interface FilamentDTO {

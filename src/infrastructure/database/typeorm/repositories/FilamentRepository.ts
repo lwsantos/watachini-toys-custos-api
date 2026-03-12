@@ -37,6 +37,10 @@ export class FilamentRepository implements IFilamentRepository {
       where.status = this.toEntityStatus(filters.status);
     }
 
+    if (filters?.manufacturer) {
+      where.manufacturer = filters.manufacturer;
+    }
+
     const entities = await this.repository.find({
       where,
       relations: ['purchase'],
