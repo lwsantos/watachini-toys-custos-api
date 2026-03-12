@@ -42,7 +42,7 @@ export class ProductRepository implements IProductRepository {
   async findAll(): Promise<Product[]> {
     const entities = await this.repository.find({
       relations: ['parts', 'parts.partFilaments'],
-      order: { createdAt: 'DESC' },
+      order: { name: 'ASC' },
     });
     return entities.map((entity) => this.toDomain(entity));
   }

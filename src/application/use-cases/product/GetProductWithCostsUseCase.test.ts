@@ -53,10 +53,9 @@ describe('GetProductWithCostsUseCase', () => {
         filamentCost: 5,
         energyCost: 2,
         maintenanceCost: 1,
-        laborCost: 4,
-        totalCost: 12,
+        totalCost: 8,
+        usedFilamentCostPerGram: 0.1,
         usedEnergyCostPerHour: 1,
-        usedLaborCostPerHour: 2,
         usedMaintenanceCostPerHour: 0.5,
         createdAt: new Date('2024-01-15'),
       });
@@ -65,10 +64,11 @@ describe('GetProductWithCostsUseCase', () => {
         id: 'product-1',
         name: 'Test Product',
         description: 'A test product',
+        laborTimeMinutes: 0,
         parts: [part],
-        totalCost: 12,
+        totalCost: 8,
         profitMargin: 30,
-        finalPrice: 15.6,
+        finalPrice: 11,
         createdAt: new Date('2024-01-15'),
         updatedAt: new Date('2024-01-15'),
       });
@@ -80,9 +80,9 @@ describe('GetProductWithCostsUseCase', () => {
       expect(result.productId).toBe('product-1');
       expect(result.name).toBe('Test Product');
       expect(result.description).toBe('A test product');
-      expect(result.totalCost).toBe(12);
+      expect(result.totalCost).toBe(8);
       expect(result.profitMargin).toBe(30);
-      expect(result.finalPrice).toBe(15.6);
+      expect(result.finalPrice).toBe(11);
       expect(result.parts).toHaveLength(1);
     });
 
@@ -107,10 +107,9 @@ describe('GetProductWithCostsUseCase', () => {
         filamentCost: 15,
         energyCost: 3,
         maintenanceCost: 1.5,
-        laborCost: 6,
-        totalCost: 25.5,
+        totalCost: 19.5,
+        usedFilamentCostPerGram: 0.15,
         usedEnergyCostPerHour: 1,
-        usedLaborCostPerHour: 2,
         usedMaintenanceCostPerHour: 0.5,
         createdAt: new Date(),
       });
@@ -119,10 +118,11 @@ describe('GetProductWithCostsUseCase', () => {
         id: 'product-1',
         name: 'Product',
         description: '',
+        laborTimeMinutes: 0,
         parts: [part],
-        totalCost: 25.5,
+        totalCost: 19.5,
         profitMargin: 0,
-        finalPrice: 25.5,
+        finalPrice: 20,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -139,8 +139,7 @@ describe('GetProductWithCostsUseCase', () => {
       expect(partResult.costs.filamentCost).toBe(15);
       expect(partResult.costs.energyCost).toBe(3);
       expect(partResult.costs.maintenanceCost).toBe(1.5);
-      expect(partResult.costs.laborCost).toBe(6);
-      expect(partResult.costs.totalCost).toBe(25.5);
+      expect(partResult.costs.totalCost).toBe(19.5);
     });
 
     it('should return filament information for each part', async () => {
@@ -170,10 +169,9 @@ describe('GetProductWithCostsUseCase', () => {
         filamentCost: 8.8,
         energyCost: 2.5,
         maintenanceCost: 1.25,
-        laborCost: 5,
-        totalCost: 17.55,
+        totalCost: 12.55,
+        usedFilamentCostPerGram: 0.11,
         usedEnergyCostPerHour: 1,
-        usedLaborCostPerHour: 2,
         usedMaintenanceCostPerHour: 0.5,
         createdAt: new Date(),
       });
@@ -182,10 +180,11 @@ describe('GetProductWithCostsUseCase', () => {
         id: 'product-1',
         name: 'MultiColor Product',
         description: '',
+        laborTimeMinutes: 0,
         parts: [part],
-        totalCost: 17.55,
+        totalCost: 12.55,
         profitMargin: 0,
-        finalPrice: 17.55,
+        finalPrice: 13,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -216,10 +215,9 @@ describe('GetProductWithCostsUseCase', () => {
         filamentCost: 5,
         energyCost: 1.5,
         maintenanceCost: 0.75,
-        laborCost: 3,
-        totalCost: 10.25,
+        totalCost: 7.25,
+        usedFilamentCostPerGram: 0.1,
         usedEnergyCostPerHour: 1.5,
-        usedLaborCostPerHour: 3,
         usedMaintenanceCostPerHour: 0.75,
         createdAt: new Date(),
       });
@@ -228,10 +226,11 @@ describe('GetProductWithCostsUseCase', () => {
         id: 'product-1',
         name: 'Product',
         description: '',
+        laborTimeMinutes: 0,
         parts: [part],
-        totalCost: 10.25,
+        totalCost: 7.25,
         profitMargin: 0,
-        finalPrice: 10.25,
+        finalPrice: 8,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -241,8 +240,8 @@ describe('GetProductWithCostsUseCase', () => {
       const result = await useCase.execute('product-1');
       const partResult = result.parts[0];
 
+      expect(partResult.configurationSnapshot.filamentCostPerGram).toBe(0.1);
       expect(partResult.configurationSnapshot.energyCostPerHour).toBe(1.5);
-      expect(partResult.configurationSnapshot.laborCostPerHour).toBe(3);
       expect(partResult.configurationSnapshot.maintenanceCostPerHour).toBe(0.75);
     });
   });
@@ -259,10 +258,9 @@ describe('GetProductWithCostsUseCase', () => {
         filamentCost: 3,
         energyCost: 1,
         maintenanceCost: 0.5,
-        laborCost: 2,
-        totalCost: 6.5,
+        totalCost: 4.5,
+        usedFilamentCostPerGram: 0.1,
         usedEnergyCostPerHour: 1,
-        usedLaborCostPerHour: 2,
         usedMaintenanceCostPerHour: 0.5,
         createdAt: new Date(),
       });
@@ -277,10 +275,9 @@ describe('GetProductWithCostsUseCase', () => {
         filamentCost: 7,
         energyCost: 2,
         maintenanceCost: 1,
-        laborCost: 4,
-        totalCost: 14,
+        totalCost: 10,
+        usedFilamentCostPerGram: 0.1,
         usedEnergyCostPerHour: 1,
-        usedLaborCostPerHour: 2,
         usedMaintenanceCostPerHour: 0.5,
         createdAt: new Date(),
       });
@@ -289,10 +286,11 @@ describe('GetProductWithCostsUseCase', () => {
         id: 'product-1',
         name: 'Multi-Part Product',
         description: 'Product with multiple parts',
+        laborTimeMinutes: 0,
         parts: [part1, part2],
-        totalCost: 20.5,
+        totalCost: 14.5,
         profitMargin: 25,
-        finalPrice: 25.625,
+        finalPrice: 19,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -303,10 +301,10 @@ describe('GetProductWithCostsUseCase', () => {
 
       expect(result.parts).toHaveLength(2);
       expect(result.parts[0].name).toBe('Part A');
-      expect(result.parts[0].costs.totalCost).toBe(6.5);
+      expect(result.parts[0].costs.totalCost).toBe(4.5);
       expect(result.parts[1].name).toBe('Part B');
-      expect(result.parts[1].costs.totalCost).toBe(14);
-      expect(result.totalCost).toBe(20.5);
+      expect(result.parts[1].costs.totalCost).toBe(10);
+      expect(result.totalCost).toBe(14.5);
     });
   });
 
@@ -316,6 +314,7 @@ describe('GetProductWithCostsUseCase', () => {
         id: 'test-id',
         name: 'Test',
         description: '',
+        laborTimeMinutes: 0,
         parts: [],
         totalCost: 0,
         profitMargin: 0,

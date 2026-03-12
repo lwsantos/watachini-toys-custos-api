@@ -8,7 +8,8 @@ describe('UpdateCostConfigurationUseCase', () => {
 
   const existingConfig = new CostConfiguration({
     id: 'config-1',
-    energyCostPerHour: 1.0,
+    energyCostPerKwh: 1.0,
+    printerPowerKwh: 0.2,
     laborCostPerHour: 10.0,
     maintenanceCostPerHour: 2.0,
     updatedAt: new Date('2024-01-01'),
@@ -28,14 +29,16 @@ describe('UpdateCostConfigurationUseCase', () => {
   describe('successful updates', () => {
     it('should update configuration with valid positive values', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: 2.5,
+        energyCostPerKwh: 2.5,
+        printerPowerKwh: 0.3,
         laborCostPerHour: 15.0,
         maintenanceCostPerHour: 3.0,
       };
 
       const result = await useCase.execute(input);
 
-      expect(result.energyCostPerHour).toBe(2.5);
+      expect(result.energyCostPerKwh).toBe(2.5);
+      expect(result.printerPowerKwh).toBe(0.3);
       expect(result.laborCostPerHour).toBe(15.0);
       expect(result.maintenanceCostPerHour).toBe(3.0);
       expect(mockRepository.update).toHaveBeenCalled();
@@ -43,14 +46,16 @@ describe('UpdateCostConfigurationUseCase', () => {
 
     it('should accept zero values as valid', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: 0,
+        energyCostPerKwh: 0,
+        printerPowerKwh: 0,
         laborCostPerHour: 0,
         maintenanceCostPerHour: 0,
       };
 
       const result = await useCase.execute(input);
 
-      expect(result.energyCostPerHour).toBe(0);
+      expect(result.energyCostPerKwh).toBe(0);
+      expect(result.printerPowerKwh).toBe(0);
       expect(result.laborCostPerHour).toBe(0);
       expect(result.maintenanceCostPerHour).toBe(0);
     });
@@ -59,7 +64,8 @@ describe('UpdateCostConfigurationUseCase', () => {
       const beforeUpdate = new Date();
       
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: 5.0,
+        energyCostPerKwh: 5.0,
+        printerPowerKwh: 0.25,
         laborCostPerHour: 20.0,
         maintenanceCostPerHour: 4.0,
       };
@@ -71,7 +77,8 @@ describe('UpdateCostConfigurationUseCase', () => {
 
     it('should preserve the configuration id', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: 1.5,
+        energyCostPerKwh: 1.5,
+        printerPowerKwh: 0.2,
         laborCostPerHour: 12.0,
         maintenanceCostPerHour: 2.5,
       };
@@ -83,20 +90,34 @@ describe('UpdateCostConfigurationUseCase', () => {
   });
 
   describe('validation errors', () => {
-    it('should reject negative energyCostPerHour', async () => {
+    it('should reject negative energyCostPerKwh', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: -1.0,
+        energyCostPerKwh: -1.0,
+        printerPowerKwh: 0.2,
         laborCostPerHour: 10.0,
         maintenanceCostPerHour: 2.0,
       };
 
       await expect(useCase.execute(input)).rejects.toThrow('VAL003');
-      await expect(useCase.execute(input)).rejects.toThrow('energyCostPerHour must be a positive value');
+      await expect(useCase.execute(input)).rejects.toThrow('energyCostPerKwh must be a positive value');
+    });
+
+    it('should reject negative printerPowerKwh', async () => {
+      const input: UpdateCostConfigurationInput = {
+        energyCostPerKwh: 1.0,
+        printerPowerKwh: -0.2,
+        laborCostPerHour: 10.0,
+        maintenanceCostPerHour: 2.0,
+      };
+
+      await expect(useCase.execute(input)).rejects.toThrow('VAL003');
+      await expect(useCase.execute(input)).rejects.toThrow('printerPowerKwh must be a positive value');
     });
 
     it('should reject negative laborCostPerHour', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: 1.0,
+        energyCostPerKwh: 1.0,
+        printerPowerKwh: 0.2,
         laborCostPerHour: -10.0,
         maintenanceCostPerHour: 2.0,
       };
@@ -107,7 +128,8 @@ describe('UpdateCostConfigurationUseCase', () => {
 
     it('should reject negative maintenanceCostPerHour', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: 1.0,
+        energyCostPerKwh: 1.0,
+        printerPowerKwh: 0.2,
         laborCostPerHour: 10.0,
         maintenanceCostPerHour: -2.0,
       };
@@ -118,19 +140,22 @@ describe('UpdateCostConfigurationUseCase', () => {
 
     it('should report all negative values in error message', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: -1.0,
+        energyCostPerKwh: -1.0,
+        printerPowerKwh: -0.2,
         laborCostPerHour: -10.0,
         maintenanceCostPerHour: -2.0,
       };
 
-      await expect(useCase.execute(input)).rejects.toThrow('energyCostPerHour must be a positive value');
+      await expect(useCase.execute(input)).rejects.toThrow('energyCostPerKwh must be a positive value');
+      await expect(useCase.execute(input)).rejects.toThrow('printerPowerKwh must be a positive value');
       await expect(useCase.execute(input)).rejects.toThrow('laborCostPerHour must be a positive value');
       await expect(useCase.execute(input)).rejects.toThrow('maintenanceCostPerHour must be a positive value');
     });
 
     it('should not call repository update when validation fails', async () => {
       const input: UpdateCostConfigurationInput = {
-        energyCostPerHour: -1.0,
+        energyCostPerKwh: -1.0,
+        printerPowerKwh: 0.2,
         laborCostPerHour: 10.0,
         maintenanceCostPerHour: 2.0,
       };

@@ -4,3 +4,7 @@ export { Product } from './Product';
 export { ProductPart } from './ProductPart';
 export { PartFilament, FilamentCharacteristics } from './PartFilament';
 export { CostConfiguration } from './CostConfiguration';
+export { OrderStatus, PaymentStatus, PaymentMethod, ShippingPaidBy } from './OrderEnums';
+export { Customer, ValidationError } from './Customer';
+export { OrderItem, OrderItemProps } from './OrderItem';
+export { Order, OrderProps } from './Order';

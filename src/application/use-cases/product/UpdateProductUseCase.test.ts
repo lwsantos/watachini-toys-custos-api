@@ -98,6 +98,7 @@ describe('UpdateProductUseCase', () => {
       findOldestAvailable: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
+      findByPurchaseId: jest.fn(),
       findAvailableByCharacteristics: jest.fn(),
       getUniqueAvailableCharacteristics: jest.fn(),
     };

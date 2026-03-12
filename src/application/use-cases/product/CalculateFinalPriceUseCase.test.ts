@@ -144,8 +144,8 @@ describe('CalculateFinalPriceUseCase', () => {
 
       const result = await useCase.execute(dto);
 
-      // finalPrice = 100 * (1 + 15.5/100) = 100 * 1.155 = 115.5
-      expect(result.finalPrice).toBe(115.5);
+      // finalPrice = ceil(100 * (1 + 15.5/100)) = ceil(100 * 1.155) = ceil(115.5) = 116
+      expect(result.finalPrice).toBe(116);
     });
   });
 

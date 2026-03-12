@@ -3,6 +3,8 @@ import cors from 'cors';
 import filamentRoutes from './presentation/controllers/FilamentController';
 import productRoutes from './presentation/controllers/ProductController';
 import configurationRoutes from './presentation/controllers/ConfigurationController';
+import customerRoutes from './presentation/controllers/CustomerController';
+import orderRoutes from './presentation/controllers/OrderController';
 import { errorHandler } from './presentation/middlewares/errorHandler';
 
 // Create Express application
@@ -34,6 +36,8 @@ app.get('/api', (_req: Request, res: Response) => {
 app.use('/api/filaments', filamentRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/configuration', configurationRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/orders', orderRoutes);
 
 // 404 handler for unknown routes
 app.use((_req: Request, res: Response) => {

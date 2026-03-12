@@ -17,12 +17,17 @@ describe('RegisterFilamentPurchaseUseCase', () => {
       findAvailableByColorAndType: jest.fn(),
       findAllAvailable: jest.fn(),
       updateStatus: jest.fn(),
+      update: jest.fn(),
       findOldestAvailable: jest.fn(),
+      findByPurchaseId: jest.fn(),
+      findAvailableByCharacteristics: jest.fn(),
+      getUniqueAvailableCharacteristics: jest.fn(),
     };
 
     mockFilamentPurchaseRepository = {
       create: jest.fn().mockImplementation((purchase: FilamentPurchase) => Promise.resolve(purchase)),
       findById: jest.fn(),
+      update: jest.fn(),
     };
 
     useCase = new RegisterFilamentPurchaseUseCase(
@@ -251,8 +256,8 @@ describe('RegisterFilamentPurchaseUseCase', () => {
       const createdFilament = mockFilamentRepository.create.mock.calls[0][0];
 
       // totalCost = (200 - 50) + 25 = 175
-      // costPerGram = 175 / 1000 = 0.175
-      expect(createdFilament.costPerGram).toBe(0.175);
+      // costPerGram = round(175 / 1000 * 100) / 100 = round(17.5) / 100 = 0.18
+      expect(createdFilament.costPerGram).toBe(0.18);
       expect(createdFilament.totalCost).toBe(175);
     });
 

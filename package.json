@@ -16,7 +16,7 @@
     "test:coverage": "jest --coverage",
     "docker:stop": "docker stop custos-backend || true && docker rm custos-backend || true",
     "docker:build": "docker build -t custos-backend .",
-    "docker:run": "docker run -d --name custos-backend --restart unless-stopped --env-file .env --add-host=host.docker.internal:host-gateway -p 3000:3000 custos-backend",
+    "docker:run": "docker run -d --name custos-backend --restart unless-stopped --env-file .env --add-host=host.docker.internal:host-gateway -p 4000:4000 custos-backend",
     "deploy": "npm run docker:stop && npm run docker:build && npm run docker:run"
   },
   "keywords": [

@@ -4,3 +4,7 @@ export * from './CreateProductDTO';
 export * from './UpdateProductDTO';
 export * from './GetProductDTO';
 export * from './CostConfigurationDTO';
+export * from './CustomerDTO';
+export * from './OrderDTO';
+export * from './PaymentDTO';
+export * from './ListOrdersDTO';
