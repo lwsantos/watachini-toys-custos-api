@@ -1,6 +1,6 @@
 export { IFilamentRepository } from './IFilamentRepository';
-export { IFilamentPurchaseRepository } from './IFilamentPurchaseRepository';
+export { IPurchaseRepository } from './IPurchaseRepository';
 export { IProductRepository } from './IProductRepository';
-export { ICostConfigurationRepository } from './ICostConfigurationRepository';
-export { ICustomerRepository } from './ICustomerRepository';
 export { IOrderRepository } from './IOrderRepository';
+export { ICustomerRepository } from './ICustomerRepository';
+export { ICostConfigurationRepository } from './ICostConfigurationRepository';

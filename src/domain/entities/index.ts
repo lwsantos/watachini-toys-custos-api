@@ -1,5 +1,5 @@
 export { Filament, FilamentStatus } from './Filament';
-export { FilamentPurchase } from './FilamentPurchase';
+export { Purchase } from './Purchase';
 export { Product } from './Product';
 export { ProductPart } from './ProductPart';
 export { PartFilament, FilamentCharacteristics } from './PartFilament';

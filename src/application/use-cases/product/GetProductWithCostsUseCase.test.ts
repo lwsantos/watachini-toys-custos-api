@@ -33,13 +33,13 @@ describe('GetProductWithCostsUseCase', () => {
     it('should return product with detailed cost breakdown', async () => {
       const filament = new Filament({
         id: 'filament-1',
+        purchaseId: 'purchase-1',
         color: 'Red',
         filamentType: 'PLA',
         manufacturer: 'TestBrand',
         costPerGram: 0.1,
         totalCost: 100,
         status: FilamentStatus.AVAILABLE,
-        purchaseDate: new Date('2024-01-01'),
         createdAt: new Date('2024-01-01'),
       });
 
@@ -89,12 +89,14 @@ describe('GetProductWithCostsUseCase', () => {
     it('should return part with all cost details', async () => {
       const filament = new Filament({
         id: 'filament-1',
+        purchaseId: 'purchase-1',
         color: 'Blue',
         filamentType: 'PETG',
         manufacturer: 'BrandX',
         costPerGram: 0.15,
         totalCost: 150,
         status: FilamentStatus.AVAILABLE,
+        createdAt: new Date(),
       });
 
       const part = new ProductPart({
@@ -145,18 +147,26 @@ describe('GetProductWithCostsUseCase', () => {
     it('should return filament information for each part', async () => {
       const filament1 = new Filament({
         id: 'filament-1',
+        purchaseId: 'purchase-1',
         color: 'Red',
         filamentType: 'PLA',
         manufacturer: 'Brand1',
         costPerGram: 0.1,
+        totalCost: 100,
+        status: FilamentStatus.AVAILABLE,
+        createdAt: new Date(),
       });
 
       const filament2 = new Filament({
         id: 'filament-2',
+        purchaseId: 'purchase-2',
         color: 'White',
         filamentType: 'PLA',
         manufacturer: 'Brand2',
         costPerGram: 0.12,
+        totalCost: 120,
+        status: FilamentStatus.AVAILABLE,
+        createdAt: new Date(),
       });
 
       const part = new ProductPart({

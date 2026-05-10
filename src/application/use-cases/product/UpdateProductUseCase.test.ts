@@ -42,7 +42,6 @@ describe('UpdateProductUseCase', () => {
       costPerGram,
       totalCost: costPerGram * 1000,
       status: FilamentStatus.AVAILABLE,
-      purchaseDate: new Date(),
       createdAt: new Date(),
     });
   };
@@ -98,9 +97,11 @@ describe('UpdateProductUseCase', () => {
       findOldestAvailable: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
+      updateCostsForPurchase: jest.fn(),
       findByPurchaseId: jest.fn(),
       findAvailableByCharacteristics: jest.fn(),
       getUniqueAvailableCharacteristics: jest.fn(),
+      delete: jest.fn(),
     };
 
     mockCostConfigurationRepository = {

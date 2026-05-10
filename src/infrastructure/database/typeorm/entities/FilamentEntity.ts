@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { FilamentPurchaseEntity } from './FilamentPurchaseEntity';
+import { PurchaseEntity } from './PurchaseEntity';
 
 export enum FilamentStatusEnum {
   AVAILABLE = 'available',
@@ -30,11 +30,15 @@ export class FilamentEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   manufacturer: string;
 
-  @Column({ name: 'cost_per_gram', type: 'decimal', precision: 10, scale: 2 })
+  @Column({ name: 'cost_per_gram', type: 'decimal', precision: 10, scale: 4 })
   costPerGram: number;
 
   @Column({ name: 'total_cost', type: 'decimal', precision: 10, scale: 2 })
   totalCost: number;
+
+  /** Valor unitário de catálogo da bobina, antes de ratear frete/desconto (multi-linha) */
+  @Column({ name: 'unit_price_at_purchase', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  unitPriceAtPurchase: number | null;
 
   @Column({
     type: 'enum',
@@ -43,13 +47,10 @@ export class FilamentEntity {
   })
   status: FilamentStatusEnum;
 
-  @Column({ name: 'purchase_date', type: 'timestamp' })
-  purchaseDate: Date;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @ManyToOne(() => FilamentPurchaseEntity, (purchase) => purchase.filaments)
+  @ManyToOne(() => PurchaseEntity, (purchase) => purchase.filaments)
   @JoinColumn({ name: 'purchase_id' })
-  purchase: FilamentPurchaseEntity;
+  purchase: PurchaseEntity;
 }

@@ -15,6 +15,12 @@ export interface IFilamentRepository {
   findAllAvailable(): Promise<Filament[]>;
   updateStatus(id: string, status: FilamentStatus): Promise<void>;
   update(filament: Filament): Promise<Filament>;
+
+  delete(id: string): Promise<void>;
+
+  /** Atualiza custo unitário de todos os filamentos vinculados à mesma compra */
+  updateCostsForPurchase(purchaseId: string, totalCostPerUnit: number, costPerGram: number): Promise<void>;
+
   findOldestAvailable(color: string, type: string): Promise<Filament | null>;
   findByPurchaseId(purchaseId: string): Promise<Filament[]>;
 

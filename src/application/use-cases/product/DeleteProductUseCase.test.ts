@@ -16,7 +16,6 @@ describe('DeleteProductUseCase', () => {
       costPerGram,
       totalCost: costPerGram * 1000,
       status: FilamentStatus.AVAILABLE,
-      purchaseDate: new Date(),
       createdAt: new Date(),
     });
   };

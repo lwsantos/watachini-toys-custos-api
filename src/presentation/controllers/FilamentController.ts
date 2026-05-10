@@ -3,23 +3,31 @@ import { RegisterFilamentPurchaseUseCase, ValidationError } from '../../applicat
 import { ListFilamentsUseCase } from '../../application/use-cases/filament/ListFilamentsUseCase';
 import { MarkFilamentAsEmptyUseCase, FilamentNotFoundError } from '../../application/use-cases/filament/MarkFilamentAsEmptyUseCase';
 import { UpdateFilamentUseCase, FilamentNotFoundError as UpdateFilamentNotFoundError, ValidationError as UpdateValidationError } from '../../application/use-cases/filament/UpdateFilamentUseCase';
-import { FilamentRepository, FilamentPurchaseRepository } from '../../infrastructure/database/typeorm/repositories';
+import { GetPurchaseForEditUseCase } from '../../application/use-cases/filament/GetPurchaseForEditUseCase';
+import { UpdateFilamentPurchaseUseCase } from '../../application/use-cases/filament/UpdateFilamentPurchaseUseCase';
+import { PurchaseNotFoundError } from '../../application/use-cases/filament/errors';
+import { FilamentRepository, PurchaseRepository } from '../../infrastructure/database/typeorm/repositories';
 import { FilamentStatus } from '../../domain/entities';
 
 const router = Router();
 
 // Instantiate repositories
 const filamentRepository = new FilamentRepository();
-const filamentPurchaseRepository = new FilamentPurchaseRepository();
+const purchaseRepository = new PurchaseRepository();
 
 // Instantiate use cases
 const registerFilamentPurchaseUseCase = new RegisterFilamentPurchaseUseCase(
   filamentRepository,
-  filamentPurchaseRepository
+  purchaseRepository
 );
 const listFilamentsUseCase = new ListFilamentsUseCase(filamentRepository);
 const markFilamentAsEmptyUseCase = new MarkFilamentAsEmptyUseCase(filamentRepository);
-const updateFilamentUseCase = new UpdateFilamentUseCase(filamentRepository, filamentPurchaseRepository);
+const updateFilamentUseCase = new UpdateFilamentUseCase(filamentRepository, purchaseRepository);
+const getPurchaseForEditUseCase = new GetPurchaseForEditUseCase(filamentRepository, purchaseRepository);
+const updateFilamentPurchaseUseCase = new UpdateFilamentPurchaseUseCase(
+  filamentRepository,
+  purchaseRepository
+);
 
 // POST /api/filaments/purchases - Registrar compra de filamento
 router.post('/purchases', async (req: Request, res: Response, next: NextFunction) => {
@@ -27,6 +35,49 @@ router.post('/purchases', async (req: Request, res: Response, next: NextFunction
     const result = await registerFilamentPurchaseUseCase.execute(req.body);
     res.status(201).json(result);
   } catch (error) {
+    if (error instanceof ValidationError) {
+      res.status(400).json({
+        error: 'Validation Error',
+        message: error.message,
+      });
+      return;
+    }
+    next(error);
+  }
+});
+
+// GET /api/filaments/purchases/:purchaseId — dados da compra para edição (mesmo formato do registro)
+router.get('/purchases/:purchaseId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { purchaseId } = req.params;
+    const result = await getPurchaseForEditUseCase.execute(purchaseId);
+    res.json(result);
+  } catch (error) {
+    if (error instanceof PurchaseNotFoundError) {
+      res.status(404).json({
+        error: 'Not Found',
+        message: error.message,
+      });
+      return;
+    }
+    next(error);
+  }
+});
+
+// PUT /api/filaments/purchases/:purchaseId — atualiza compra inteira (linhas + frete/desconto)
+router.put('/purchases/:purchaseId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { purchaseId } = req.params;
+    const result = await updateFilamentPurchaseUseCase.execute(purchaseId, req.body);
+    res.json(result);
+  } catch (error) {
+    if (error instanceof PurchaseNotFoundError) {
+      res.status(404).json({
+        error: 'Not Found',
+        message: error.message,
+      });
+      return;
+    }
     if (error instanceof ValidationError) {
       res.status(400).json({
         error: 'Validation Error',

@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Filament, FilamentPurchase, FilamentStatus } from '../../../domain/entities';
+import { Filament, Purchase, FilamentStatus } from '../../../domain/entities';
 import { IFilamentRepository } from '../../../domain/repositories/IFilamentRepository';
-import { IFilamentPurchaseRepository } from '../../../domain/repositories/IFilamentPurchaseRepository';
+import { IPurchaseRepository } from '../../../domain/repositories/IPurchaseRepository';
 import {
   RegisterFilamentPurchaseDTO,
   RegisterFilamentPurchaseResultDTO,
@@ -17,84 +17,106 @@ export class ValidationError extends Error {
 export class RegisterFilamentPurchaseUseCase {
   constructor(
     private filamentRepository: IFilamentRepository,
-    private filamentPurchaseRepository: IFilamentPurchaseRepository
+    private purchaseRepository: IPurchaseRepository
   ) {}
 
   async execute(dto: RegisterFilamentPurchaseDTO): Promise<RegisterFilamentPurchaseResultDTO> {
     this.validateRequiredFields(dto);
 
-    const quantity = dto.quantity;
-    const totalPurchaseCost = this.calculateTotalPurchaseCost(dto);
-    const unitCost = this.calculateUnitCost(dto);
-    const costPerGram = Math.round((unitCost / 1000) * 100) / 100;
+    const lines = dto.lines;
+    const totalSpools = lines.reduce((sum, line) => sum + line.quantity, 0);
+    const subtotal = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
+    const totalDiscount = dto.discount ?? 0;
+    const totalFreight = dto.freight ?? 0;
+    const totalPurchaseCost = subtotal - totalDiscount + totalFreight;
+
+    const discountPerSpool = totalDiscount / totalSpools;
+    const freightPerSpool = totalFreight / totalSpools;
 
     const purchaseId = uuidv4();
     const now = new Date();
     const purchaseDate = dto.purchaseDate ? new Date(dto.purchaseDate) : now;
 
-    const purchase = new FilamentPurchase({
+    const purchase = new Purchase({
       id: purchaseId,
-      price: dto.price,
-      quantity: dto.quantity,
-      discount: dto.discount ?? 0,
-      freight: dto.freight ?? 0,
-      manufacturer: dto.manufacturer ?? '',
-      purchaseLocation: dto.purchaseLocation ?? '',
-      color: dto.color,
-      filamentType: dto.filamentType,
+      price: subtotal,
+      quantity: totalSpools,
+      discount: totalDiscount,
+      freight: totalFreight,
       totalCost: totalPurchaseCost,
       purchaseDate,
+      purchaseLocation: dto.purchaseLocation ?? '',
       createdAt: now,
     });
 
-    await this.filamentPurchaseRepository.create(purchase);
+    await this.purchaseRepository.create(purchase);
 
     const filamentIds: string[] = [];
-    for (let i = 0; i < quantity; i++) {
-      const filamentId = uuidv4();
-      filamentIds.push(filamentId);
 
-      const filament = new Filament({
-        id: filamentId,
-        purchaseId,
-        color: dto.color,
-        filamentType: dto.filamentType,
-        manufacturer: dto.manufacturer ?? '',
-        costPerGram,
-        totalCost: unitCost,
-        status: FilamentStatus.AVAILABLE,
-        purchaseDate,
-        createdAt: now,
-      });
+    for (const line of lines) {
+      const unitCostPerSpool = line.unitPrice - discountPerSpool + freightPerSpool;
+      const costPerGram = Math.round((unitCostPerSpool / 1000) * 100) / 100;
 
-      await this.filamentRepository.create(filament);
+      for (let i = 0; i < line.quantity; i++) {
+        const filamentId = uuidv4();
+        filamentIds.push(filamentId);
+
+        const filament = new Filament({
+          id: filamentId,
+          purchaseId,
+          color: line.color,
+          filamentType: line.filamentType,
+          manufacturer: line.manufacturer ?? '',
+          unitPriceAtPurchase: line.unitPrice,
+          costPerGram,
+          totalCost: unitCostPerSpool,
+          status: FilamentStatus.AVAILABLE,
+          createdAt: now,
+        });
+
+        await this.filamentRepository.create(filament);
+      }
     }
+
+    const firstUnitCost =
+      lines.length > 0
+        ? lines[0].unitPrice - discountPerSpool + freightPerSpool
+        : 0;
+    const firstCostPerGram =
+      lines.length > 0 ? Math.round((firstUnitCost / 1000) * 100) / 100 : 0;
 
     return {
       purchaseId,
+      filamentIds,
       filamentId: filamentIds[0],
-      totalCost: unitCost,
-      costPerGram,
+      totalCost: firstUnitCost,
+      costPerGram: firstCostPerGram,
     };
   }
 
   private validateRequiredFields(dto: RegisterFilamentPurchaseDTO): void {
     const missingFields: string[] = [];
 
-    if (dto.price === undefined || dto.price === null) {
-      missingFields.push('price');
+    if (!dto.lines || dto.lines.length === 0) {
+      missingFields.push('lines');
     }
 
-    if (dto.quantity === undefined || dto.quantity === null || dto.quantity < 1) {
-      missingFields.push('quantity');
-    }
-
-    if (!dto.color || dto.color.trim() === '') {
-      missingFields.push('color');
-    }
-
-    if (!dto.filamentType || dto.filamentType.trim() === '') {
-      missingFields.push('filamentType');
+    if (dto.lines && dto.lines.length > 0) {
+      dto.lines.forEach((line, index) => {
+        const prefix = `lines[${index}]`;
+        if (!line.color || line.color.trim() === '') {
+          missingFields.push(`${prefix}.color`);
+        }
+        if (!line.filamentType || line.filamentType.trim() === '') {
+          missingFields.push(`${prefix}.filamentType`);
+        }
+        if (line.quantity === undefined || line.quantity === null || line.quantity < 1) {
+          missingFields.push(`${prefix}.quantity`);
+        }
+        if (line.unitPrice === undefined || line.unitPrice === null || line.unitPrice <= 0) {
+          missingFields.push(`${prefix}.unitPrice`);
+        }
+      });
     }
 
     if (missingFields.length > 0) {
@@ -102,32 +124,5 @@ export class RegisterFilamentPurchaseUseCase {
         `Campos obrigatórios não preenchidos: ${missingFields.join(', ')}`
       );
     }
-  }
-
-  /**
-   * Calcula o custo total da compra (todos os itens)
-   */
-  private calculateTotalPurchaseCost(dto: RegisterFilamentPurchaseDTO): number {
-    const price = dto.price;
-    const discount = dto.discount ?? 0;
-    const freight = dto.freight ?? 0;
-
-    return (price - discount) + freight;
-  }
-
-  /**
-   * Calcula o custo unitário de cada filamento
-   * O preço já é unitário, mas desconto e frete são divididos pela quantidade
-   */
-  private calculateUnitCost(dto: RegisterFilamentPurchaseDTO): number {
-    const price = dto.price;
-    const quantity = dto.quantity;
-    const discount = dto.discount ?? 0;
-    const freight = dto.freight ?? 0;
-
-    const discountPerUnit = discount / quantity;
-    const freightPerUnit = freight / quantity;
-
-    return (price - discountPerUnit) + freightPerUnit;
   }
 }

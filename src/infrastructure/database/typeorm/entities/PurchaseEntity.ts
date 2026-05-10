@@ -8,7 +8,7 @@ import {
 import { FilamentEntity } from './FilamentEntity';
 
 @Entity('filament_purchases')
-export class FilamentPurchaseEntity {
+export class PurchaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -24,23 +24,14 @@ export class FilamentPurchaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   freight: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  manufacturer: string;
-
-  @Column({ name: 'purchase_location', type: 'varchar', length: 255, nullable: true })
-  purchaseLocation: string;
-
-  @Column({ type: 'varchar', length: 100 })
-  color: string;
-
-  @Column({ name: 'filament_type', type: 'varchar', length: 100 })
-  filamentType: string;
-
   @Column({ name: 'total_cost', type: 'decimal', precision: 10, scale: 2 })
   totalCost: number;
 
   @Column({ name: 'purchase_date', type: 'timestamp' })
   purchaseDate: Date;
+
+  @Column({ name: 'purchase_location', type: 'varchar', length: 255, nullable: true })
+  purchaseLocation: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

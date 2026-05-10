@@ -1,5 +1,6 @@
+import { Filament, Purchase } from '../../../domain/entities';
 import { IFilamentRepository } from '../../../domain/repositories/IFilamentRepository';
-import { IFilamentPurchaseRepository } from '../../../domain/repositories/IFilamentPurchaseRepository';
+import { IPurchaseRepository } from '../../../domain/repositories/IPurchaseRepository';
 import { UpdateFilamentDTO, UpdateFilamentResultDTO } from '../../dtos/UpdateFilamentDTO';
 
 export class FilamentNotFoundError extends Error {
@@ -19,7 +20,7 @@ export class ValidationError extends Error {
 export class UpdateFilamentUseCase {
   constructor(
     private filamentRepository: IFilamentRepository,
-    private filamentPurchaseRepository: IFilamentPurchaseRepository
+    private purchaseRepository: IPurchaseRepository
   ) {}
 
   async execute(dto: UpdateFilamentDTO): Promise<UpdateFilamentResultDTO> {
@@ -30,67 +31,56 @@ export class UpdateFilamentUseCase {
       throw new FilamentNotFoundError(dto.id);
     }
 
-    const price = dto.price;
-    const discount = dto.discount ?? 0;
-    const freight = dto.freight ?? 0;
-
-    // Buscar quantidade do purchase para dividir frete e desconto
-    let quantity = 1;
-    if (filament.purchaseId) {
-      const purchase = await this.filamentPurchaseRepository.findById(filament.purchaseId);
-      if (purchase) {
-        quantity = purchase.quantity;
-      }
+    const purchase = await this.purchaseRepository.findById(filament.purchaseId);
+    if (!purchase) {
+      throw new FilamentNotFoundError(dto.id);
     }
 
-    // Calcular custo unitário: preço - (desconto/qtd) + (frete/qtd)
+    const quantity = purchase.quantity;
+    if (!quantity || quantity < 1) {
+      throw new ValidationError('Quantidade da compra inválida');
+    }
+
+    const discount = dto.discount ?? 0;
+    const freight = dto.freight ?? 0;
     const discountPerUnit = discount / quantity;
     const freightPerUnit = freight / quantity;
-    const unitCost = (price - discountPerUnit) + freightPerUnit;
+    const unitCatalogPrice = dto.price;
+    const unitCost = unitCatalogPrice - discountPerUnit + freightPerUnit;
     const costPerGram = Math.round((unitCost / 1000) * 100) / 100;
 
-    // Calcular custo total da compra (para o purchase)
-    const totalPurchaseCost = (price - discount) + freight;
-
-    // Atualizar filamento
     filament.color = dto.color;
     filament.filamentType = dto.filamentType;
     filament.manufacturer = dto.manufacturer ?? '';
+    filament.unitPriceAtPurchase = unitCatalogPrice;
     filament.totalCost = unitCost;
     filament.costPerGram = costPerGram;
-    filament.purchaseDate = new Date(dto.purchaseDate);
 
+    purchase.purchaseLocation = dto.purchaseLocation ?? '';
+    purchase.purchaseDate = new Date(dto.purchaseDate);
+    purchase.discount = discount;
+    purchase.freight = freight;
+
+    const siblings = await this.filamentRepository.findByPurchaseId(filament.purchaseId);
+    let subtotal = 0;
+    for (const f of siblings) {
+      const catalogUnit =
+        f.id === filament.id
+          ? unitCatalogPrice
+          : this.catalogUnitForFilament(f, purchase);
+      subtotal += catalogUnit;
+    }
+
+    purchase.price = subtotal;
+    purchase.totalCost = subtotal - discount + freight;
+
+    await this.purchaseRepository.update(purchase);
     const updated = await this.filamentRepository.update(filament);
 
-    // Atualizar FilamentPurchase e todos os filamentos relacionados
-    if (filament.purchaseId) {
-      const purchase = await this.filamentPurchaseRepository.findById(filament.purchaseId);
-      if (purchase) {
-        purchase.color = dto.color;
-        purchase.filamentType = dto.filamentType;
-        purchase.manufacturer = dto.manufacturer ?? '';
-        purchase.purchaseLocation = dto.purchaseLocation ?? '';
-        purchase.price = price;
-        purchase.discount = discount;
-        purchase.freight = freight;
-        purchase.totalCost = totalPurchaseCost;
-        purchase.purchaseDate = new Date(dto.purchaseDate);
-        await this.filamentPurchaseRepository.update(purchase);
-
-        // Atualizar todos os filamentos do mesmo purchase
-        const relatedFilaments = await this.filamentRepository.findByPurchaseId(filament.purchaseId);
-        for (const related of relatedFilaments) {
-          if (related.id !== filament.id) {
-            related.color = dto.color;
-            related.filamentType = dto.filamentType;
-            related.manufacturer = dto.manufacturer ?? '';
-            related.totalCost = unitCost;
-            related.costPerGram = costPerGram;
-            related.purchaseDate = new Date(dto.purchaseDate);
-            await this.filamentRepository.update(related);
-          }
-        }
-      }
+    const reloaded = await this.filamentRepository.findById(dto.id);
+    const p = reloaded?.purchase;
+    if (!p) {
+      throw new FilamentNotFoundError(dto.id);
     }
 
     return {
@@ -98,11 +88,19 @@ export class UpdateFilamentUseCase {
       color: updated.color,
       filamentType: updated.filamentType,
       manufacturer: updated.manufacturer,
-      purchaseLocation: dto.purchaseLocation ?? '',
+      purchaseLocation: p.purchaseLocation ?? '',
       costPerGram: updated.costPerGram,
       totalCost: updated.totalCost,
-      purchaseDate: updated.purchaseDate,
+      purchaseDate: p.purchaseDate,
     };
+  }
+
+  /** Valor de catálogo por bobina; legado sem `unitPriceAtPurchase` usa média da compra */
+  private catalogUnitForFilament(f: Filament, purchase: Purchase): number {
+    if (f.unitPriceAtPurchase !== undefined && f.unitPriceAtPurchase !== null) {
+      return f.unitPriceAtPurchase;
+    }
+    return purchase.price / purchase.quantity;
   }
 
   private validateRequiredFields(dto: UpdateFilamentDTO): void {

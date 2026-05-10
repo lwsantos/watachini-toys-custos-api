@@ -1,6 +1,8 @@
+import { Purchase } from './Purchase';
+
 export enum FilamentStatus {
   AVAILABLE = 'available',
-  EMPTY = 'empty'
+  EMPTY = 'empty',
 }
 
 export class Filament {
@@ -11,14 +13,13 @@ export class Filament {
   manufacturer: string;
   costPerGram: number;
   totalCost: number;
+  /** Valor unitário na compra, antes de frete/desconto rateados; ausente em registros antigos */
+  unitPriceAtPurchase?: number;
   status: FilamentStatus;
-  purchaseDate: Date;
-  purchaseLocation?: string;
-  purchasePrice?: number;
-  purchaseDiscount?: number;
-  purchaseFreight?: number;
-  purchaseQuantity?: number;
   createdAt: Date;
+
+  /** Preenchido quando o repositório carrega a relação com Purchase */
+  purchase?: Purchase;
 
   constructor(props: Partial<Filament>) {
     Object.assign(this, props);
